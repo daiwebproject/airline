@@ -1,0 +1,83 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My webpage</title>
+    <style>
+        .post {
+            background-color: #77dd11;
+            padding: 20px;
+            margin: 10px;
+        }
+        body {
+            padding-bottom: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div id="posts">
+    </div>
+</body>
+<script>
+//Start with first post
+let is_loading=false;
+let counter = 1;
+
+// Load posts 20 at a time
+const quantity = 20;
+
+// When DOM loads, render the first 20 posts
+document.addEventListener('DOMContentLoaded', load);
+
+// If scrolled to bottom, load the next 20 posts
+window.onscroll = () => {
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+        if (!isLoading) {
+            isLoading = true; // Đặt cờ để ngăn gọi nhiều lần
+            load(); // Gọi hàm load để tải bài viết mới
+        }
+    }
+};
+
+// Load next set of posts
+function load() {
+    console.log(`Loading posts...`);
+
+    // Set start and end post numbers, and update counter
+    const start = counter;
+    const end = start + quantity - 1;
+    counter = end + 1;
+
+    // Get new posts and add posts
+    fetch(`/posts/posts?start=${start}&end=${end}`)
+        .then(response => response.json())
+        .then(data => {
+            data.posts.forEach(add_post); // Hàm thêm bài viết vào trang
+
+            if (data.posts.length === 0) {
+                // Nếu không còn bài viết để tải, ta dừng việc load
+                console.log("No more posts to load.");
+                isLoading = true; // Set cờ để không tải thêm nữa
+            } else {
+                isLoading = false; // Cho phép tiếp tục tải nếu còn bài viết
+            }
+        })
+        .catch(error => {
+            console.error("Error loading posts:", error);
+            isLoading = false; // Nếu có lỗi, cho phép thử tải lại
+        });
+}
+
+function add_post(contents) {
+    const post = document.createElement('div');
+    post.className = 'post'
+    post.innerHTML = contents
+
+    document.querySelector('#posts').append(post)
+
+}
+</script>
+</html>
